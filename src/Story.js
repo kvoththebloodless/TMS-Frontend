@@ -10,10 +10,10 @@ constructor(props){
 }
 keyPress(e){
     console.log(this.state.sentence)
-    if(e.keyCode == 13){
+    if(e.keyCode == 13 && !(e.target.value.trim()==="")){
     
      
-      this.setState({sentence:[...this.state.sentence,e.target.value]})  
+      this.setState({sentence:[...this.state.sentence,e.target.value.trim()]})  
      
     }
  }
@@ -22,7 +22,7 @@ keyPress(e){
   render() {
 
     let listofprev=this.state.sentence.map((element,index) => {
-         return <Input value={element} key={index} inputProps={{ 'aria-label': 'description' }} style={{width:"75%",fontFamily:"TMSFont",fontSize:"2em",marginLeft:"5%",color:"white"} }onKeyDown={this.keyPress} disabled={true}/>
+         return <Input value={element} key={index} inputProps={{ 'aria-label': 'description' }} style={{width:"75%",fontFamily:"TMSFont",fontSize:"2em",marginLeft:"5%",color:"black"} }onKeyDown={this.keyPress} disabled={true} multiline={true}/>
      })
       
     return (
@@ -31,7 +31,7 @@ keyPress(e){
      
         {listofprev}
       
-       <Input defaultValue="Write your story here..." inputProps={{ 'aria-label': 'description' }} style={{width:"75%",fontFamily:"TMSFont",fontSize:"2em",marginLeft:"5%",color:"white"} }onKeyDown={this.keyPress}/>
+       <Input key = {this.state.sentence.length} placeholder="Enter text here" inputProps={{ 'aria-label': 'description',autoFocus:true }} style={{width:"75%",fontFamily:"TMSFont",fontSize:"2em",marginLeft:"5%",color:"black", fontWeight:600} }onKeyDown={this.keyPress} multiline={true}/>
 
       </div>
      

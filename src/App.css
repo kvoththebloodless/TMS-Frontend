@@ -1,9 +1,9 @@
 .App {
 
-height:  100vh;
-width: 100vw;
-background-color:black;
-position: relative;
+height:  100%;
+width: 100%;
+background-color:#fdfdfd;
+position: absolute;
 display: flex;
 flex-direction: row;
  
@@ -34,7 +34,8 @@ flex: 1;
   font-family: "TMSFont";
   
   src:  url("./fonts/Once\ Upon\ A\ Dream.ttf") format("truetype");
-  color:white;
+  color:black;
+ 
 }
 
 
