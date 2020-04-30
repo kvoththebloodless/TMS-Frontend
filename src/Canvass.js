@@ -6,6 +6,7 @@ import filePath from "../src/testfinal.glb"
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import _ from "lodash"
 import Story from "./Story"
+var context = typeof window === "undefined" ? global : window;
 export default class Canvass extends Component {
   constructor(props){
     super(props)
@@ -18,7 +19,9 @@ export default class Canvass extends Component {
     this.scene = new THREE.Scene();
     this.clock= new THREE.Clock();
     this.mixer=null
-    this.state={animchardata:undefined}
+    this.mesh=null
+    this.state={animchardata:undefined
+    ,clip:[]}
   }
   
   onParsedChange=(data)=>{
@@ -34,7 +37,47 @@ export default class Canvass extends Component {
     body: JSON.stringify(data),
   })
   .then(response => response.json())
-  .then(result=>console.log(result))
+  .then(result=>
+    {console.log(result)
+      let clipjson=result["animations"][0]["anim_"+result["animations"][0]["roles"]["Agent"]]
+     let trackarr=[]
+     for(let i=0;i<clipjson["tracks"].length;i++)
+     {let temp=clipjson["tracks"][i]
+      let values=JSON.parse(temp["values"],function( key, value ){
+        // the reviver function looks for the typed array flag
+        try{
+          if( "flag" in value && value.flag === "FLAG_TYPED_ARRAY"){
+            // if found, we convert it back to a typed array
+            return new context[ value.constructor ]( value.data );
+          }
+        }catch(e){}
+        
+        // if flag not found no conversion is done
+        return value;
+      })
+      let times=JSON.parse(temp["times"],function( key, value ){
+        // the reviver function looks for the typed array flag
+        try{
+          if( "flag" in value && value.flag === "FLAG_TYPED_ARRAY"){
+            // if found, we convert it back to a typed array
+            return new context[ value.constructor ]( value.data );
+          }
+        }catch(e){}
+        
+        // if flag not found no conversion is done
+        return value;
+      })
+       let track=new THREE.KeyframeTrack(temp["name"],times,values,THREE.InterpolateLinear)
+        trackarr.push(track)
+     }
+     let  clip=new THREE.AnimationClip(clipjson["name"],clipjson["duration"],trackarr)
+     this.setState({clip:[...this.state.clip,clip]},(data)=>{
+      this.startAnimation(this.mesh,this.state.clip,clipjson["name"])
+     
+     })
+     
+    }
+    )
 
   }
  
@@ -70,73 +113,137 @@ flatShading: true,
  child.material.skinning = true;
 }})
    
- 
+console.log(gltf.scene) 
 this.scene.add( gltf.scene );
 let tempanimations=gltf.animations
-
+this.mesh=gltf.scene.getObjectByName("Sticky")
 ////
-var context = typeof window === "undefined" ? global : window;
 
 
-// //fetch simple animations
-//   fetch('http://localhost:5000/sampleanim?bio=Person')
-//   .then(response => response.json())
-//   .then(sendanim=>{
-//     console.log(sendanim)
-//     let  newanim=[]
-//     for (let k=0;k<sendanim.length;k++)
-//     {
-//      let clipjson=sendanim[k]
-//      let trackarr=[]
-//      for(let i=0;i<clipjson["tracks"].length;i++)
-//      {let temp=clipjson["tracks"][i]
-//       let values=JSON.parse(temp["values"],function( key, value ){
-//         // the reviver function looks for the typed array flag
-//         try{
-//           if( "flag" in value && value.flag === "FLAG_TYPED_ARRAY"){
-//             // if found, we convert it back to a typed array
-//             return new context[ value.constructor ]( value.data );
-//           }
-//         }catch(e){}
+// let sendanim=[]
+// for(let i=0;i<tempanimations.length;i++)
+// { let animationClip={}
+// animationClip["name"]=tempanimations[i]["name"]
+// animationClip["duration"]=tempanimations[i]["duration"]
+// animationClip["tracks"]=[]
+// animationClip["bio"]="Person"
+// animationClip["type"]="simple"
+// for(let j=0;j<tempanimations[i]["tracks"].length;j++)
+// {
+// let track={}
+// track["interpolant"]="linear"
+// track["name"]=tempanimations[i]["tracks"][j]["name"]
+// track["times"]=JSON.stringify(tempanimations[i]["tracks"][j]["times"],function( key, value ){
+//  // the replacer function is looking for some typed arrays.
+//  // If found, it replaces it by a trio
+//  if ( 
+//       value instanceof Float32Array         )
+//  {
+//    var replacement = {
+//      constructor: value.constructor.name,
+//      data: Array.apply([], value),
+//      flag: "FLAG_TYPED_ARRAY"
+//    }
+//    return replacement;
+//  }
+//  return value;
+// })
+
+// track["values"]=JSON.stringify(tempanimations[i]["tracks"][j]["values"],function( key, value ){
+//  // the replacer function is looking for some typed arrays.
+//  // If found, it replaces it by a trio
+//  if ( 
+//       value instanceof Float32Array           )
+//  {
+//    var replacement = {
+//      constructor: value.constructor.name,
+//      data: Array.apply([], value),
+//      flag: "FLAG_TYPED_ARRAY"
+//    }
+//    return replacement;
+//  }
+//  return value;
+// })
+
+// animationClip["tracks"].push(track)
+// }
+// sendanim.push(animationClip)
+// }
+
+// for(let i=0;i<sendanim.length;i++)
+// { let options={}
+// fetch('http://localhost:5000/dump', {
+// method: 'POST', // or 'PUT'
+// headers: {
+//  'Content-Type': 'application/json',
+//  "Content-Length":JSON.stringify(sendanim[i]).length.toString()
+// },
+// body: JSON.stringify(sendanim[i]),
+// })
+// .then(response => response.json())
+// .then(result=>console.log(result))
+// }
+
+
+//fetch simple animations
+  // fetch('http://localhost:5000/sampleanim?bio=Person')
+  // .then(response => response.json())
+  // .then(sendanim=>{
+  //   console.log(sendanim)
+  //   let  newanim=[]
+  //   for (let k=0;k<sendanim.length;k++)
+  //   {
+  //    let clipjson=sendanim[k]
+  //    let trackarr=[]
+  //    for(let i=0;i<clipjson["tracks"].length;i++)
+  //    {let temp=clipjson["tracks"][i]
+  //     let values=JSON.parse(temp["values"],function( key, value ){
+  //       // the reviver function looks for the typed array flag
+  //       try{
+  //         if( "flag" in value && value.flag === "FLAG_TYPED_ARRAY"){
+  //           // if found, we convert it back to a typed array
+  //           return new context[ value.constructor ]( value.data );
+  //         }
+  //       }catch(e){}
         
-//         // if flag not found no conversion is done
-//         return value;
-//       })
-//       let times=JSON.parse(temp["times"],function( key, value ){
-//         // the reviver function looks for the typed array flag
-//         try{
-//           if( "flag" in value && value.flag === "FLAG_TYPED_ARRAY"){
-//             // if found, we convert it back to a typed array
-//             return new context[ value.constructor ]( value.data );
-//           }
-//         }catch(e){}
+  //       // if flag not found no conversion is done
+  //       return value;
+  //     })
+  //     let times=JSON.parse(temp["times"],function( key, value ){
+  //       // the reviver function looks for the typed array flag
+  //       try{
+  //         if( "flag" in value && value.flag === "FLAG_TYPED_ARRAY"){
+  //           // if found, we convert it back to a typed array
+  //           return new context[ value.constructor ]( value.data );
+  //         }
+  //       }catch(e){}
         
-//         // if flag not found no conversion is done
-//         return value;
-//       })
-//        let track=new THREE.KeyframeTrack(temp["name"],times,values,THREE.InterpolateLinear)
-//         trackarr.push(track)
-//      }
-//      let  clip=new THREE.AnimationClip(clipjson["name"],clipjson["duration"],trackarr)
-//      newanim.push(clip)
-//     }
+  //       // if flag not found no conversion is done
+  //       return value;
+  //     })
+  //      let track=new THREE.KeyframeTrack(temp["name"],times,values,THREE.InterpolateLinear)
+  //       trackarr.push(track)
+  //    }
+  //    let  clip=new THREE.AnimationClip(clipjson["name"],clipjson["duration"],trackarr)
+  //    newanim.push(clip)
+  //   }
     
-//     console.log(newanim)
+    // console.log(newanim)
     
-//     ////
+    ////
+//     console.log(tempanimations)
+//     let pose = this.tempBlendAnimation([tempanimations[10],tempanimations[0],tempanimations[11],tempanimations[3]],"pose")[4];
     
-//     let pose = this.tempBlendAnimation([newanim[8],newanim[0],newanim[11],newanim[4]],"pose")[4];
+//     let bow=this.tempBlendAnimation([tempanimations[2],tempanimations[9]],"bow")[2];
 
-//     let bow=this.tempBlendAnimation([newanim[3],newanim[9]],"bow")[2];
-   
-//     let shrug=this.tempBlendAnimation([newanim[6],newanim[11],newanim[4]],"shrug")[3];
-  
-//     let wave=this.tempBlendAnimation([newanim[6]],"wave")[1];
-//     console.log(pose)
+//     let shrug=this.tempBlendAnimation([tempanimations[6],tempanimations[11],tempanimations[3]],"shrug")[3];
+
+//     let wave=this.tempBlendAnimation([tempanimations[6]],"wave")[1];
+
   
 
 //      tempanimations=[pose,bow,shrug,wave]
-//      sendanim=[]
+//      let sendanim=[]
 // for(let i=0;i<tempanimations.length;i++)
 // { let animationClip={}
 //   animationClip["name"]=tempanimations[i]["name"]
@@ -199,8 +306,9 @@ var context = typeof window === "undefined" ? global : window;
 //   .then(response => response.json())
 //   .then(result=>console.log(result))
 // }
-//     })
-
+    // })
+  // }
+  // )
 
 
 
@@ -221,30 +329,31 @@ var context = typeof window === "undefined" ? global : window;
   }
 
  startAnimation(skinnedMesh, animations, animationName) {
-    var mixer = new THREE.AnimationMixer(skinnedMesh);
+    this.mixer = new THREE.AnimationMixer(skinnedMesh);
  
     var clip = THREE.AnimationClip.findByName(animations, animationName);
     
     if (clip) {
-      var action = mixer.clipAction(clip);
+      var action = this.mixer.clipAction(clip);
       action.setLoop( THREE.LoopOnce)
       
   action.clampWhenFinished = true
   action.enable = true
       action.play();
     }
-    mixer.addEventListener('finished',function(e) { 
+    // context=this
+    // this.mixer.addEventListener('finished',function(e) { 
    
-      // var action = mixer.clipAction(clip);
-      // action.paused = false;
-      // action.setLoop(THREE.LoopOnce);      
-      // action.timeScale = -1;
-      // mixer.removeEventListener('finished')
-      // action.play();
+    //   // var action = context.mixer.clipAction(clip);
+    //   // action.paused = false;
+    //   // action.setLoop(THREE.LoopOnce);      
+    //   // action.timeScale = -1;
+    //   // context.mixer.removeEventListener('finished')
+    //   // action.play();
      
-     });
+    //  });
     
-    return mixer;
+   
   }
   
   componentDidMount() {
