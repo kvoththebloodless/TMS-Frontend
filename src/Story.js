@@ -10,10 +10,15 @@ constructor(props){
 }
 keyPress(e){
     console.log(this.state.sentence)
-    if(e.keyCode == 13 && !(e.target.value.trim()==="")){
+    if(e.keyCode === 13 && !(e.target.value.trim()==="")){
     
      
-      this.setState({sentence:[...this.state.sentence,e.target.value.trim()]})  
+      this.setState({sentence:[...this.state.sentence,e.target.value.trim()]})
+      fetch('http://localhost:5000/storyline?line='+e.target.value.trim())
+     .then(response => response.json())  
+     .then(result=>this.props.onParsedChange(result))
+
+     
      
     }
  }

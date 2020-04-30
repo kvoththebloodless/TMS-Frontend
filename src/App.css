@@ -10,8 +10,37 @@ flex-direction: row;
 
 
 }
+
+.toolbar{
+  background-color: black;
+ color: white;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  font-size: 1em;
+  flex: 1;
+  padding: 1%;
+  padding-left: 1%;
+  width: 700px;
+  position: relative;
+ 
+  font-weight: 600;
+  }
 .disabled{
   opacity: 0.5;
+}
+.tabs{
+  width: 100%;
+}
+.selectaction{
+float: left;
+width: 200px;
+min-width: 120;
+    max-width: 300;
+}
+.selectcharacter{
+float: right;
+width: 200px;
+min-width: 120;
+    max-width: 300;
 }
 .story{
   position: relative;

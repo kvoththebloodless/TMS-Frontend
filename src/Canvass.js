@@ -5,6 +5,7 @@ import "./App.css";
 import filePath from "../src/testfinal.glb"
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import _ from "lodash"
+import Story from "./Story"
 export default class Canvass extends Component {
   constructor(props){
     super(props)
@@ -17,15 +18,32 @@ export default class Canvass extends Component {
     this.scene = new THREE.Scene();
     this.clock= new THREE.Clock();
     this.mixer=null
-    
+    this.state={animchardata:undefined}
+  }
+  
+  onParsedChange=(data)=>{
+    console.log(data)
+    this.setState({"animchardata":data})
+
+    fetch('http://localhost:5000/action', {
+    method: 'POST', // or 'PUT'
+    headers: {
+      'Content-Type': 'application/json',
+      "Content-Length":JSON.stringify(data).length.toString()
+    },
+    body: JSON.stringify(data),
+  })
+  .then(response => response.json())
+  .then(result=>console.log(result))
+
   }
  
-tempBlendAnimation(animations) {
+tempBlendAnimation(animations,name) {
     let finalanim = _.cloneDeep(animations[0]);
     for (let i = 1; i < animations.length; i++) {
       let anim = animations[i];
       let bone = anim["name"].split("_")[0];
-      console.log(bone);
+   
       for (let j = 0; j < anim["tracks"].length; j++) {
         let track = anim["tracks"][j];
         if (track["name"].startsWith(bone)) {
@@ -34,9 +52,9 @@ tempBlendAnimation(animations) {
         }
       }
     }
-    finalanim["name"] = "walkingHand";
+    finalanim["name"] = name;
     animations.push(finalanim);
-    console.log(animations)
+ 
     return animations;
   }
     
@@ -54,11 +72,136 @@ flatShading: true,
    
  
 this.scene.add( gltf.scene );
-let animations = this.tempBlendAnimation([gltf.animations[9],gltf.animations[2]]
-);
-let mesh = this.scene.getObjectByName("Sticky");
-console.log(mesh)
-this.mixer = this.startAnimation(mesh, animations, "walkingHand");
+let tempanimations=gltf.animations
+
+////
+var context = typeof window === "undefined" ? global : window;
+
+
+// //fetch simple animations
+//   fetch('http://localhost:5000/sampleanim?bio=Person')
+//   .then(response => response.json())
+//   .then(sendanim=>{
+//     console.log(sendanim)
+//     let  newanim=[]
+//     for (let k=0;k<sendanim.length;k++)
+//     {
+//      let clipjson=sendanim[k]
+//      let trackarr=[]
+//      for(let i=0;i<clipjson["tracks"].length;i++)
+//      {let temp=clipjson["tracks"][i]
+//       let values=JSON.parse(temp["values"],function( key, value ){
+//         // the reviver function looks for the typed array flag
+//         try{
+//           if( "flag" in value && value.flag === "FLAG_TYPED_ARRAY"){
+//             // if found, we convert it back to a typed array
+//             return new context[ value.constructor ]( value.data );
+//           }
+//         }catch(e){}
+        
+//         // if flag not found no conversion is done
+//         return value;
+//       })
+//       let times=JSON.parse(temp["times"],function( key, value ){
+//         // the reviver function looks for the typed array flag
+//         try{
+//           if( "flag" in value && value.flag === "FLAG_TYPED_ARRAY"){
+//             // if found, we convert it back to a typed array
+//             return new context[ value.constructor ]( value.data );
+//           }
+//         }catch(e){}
+        
+//         // if flag not found no conversion is done
+//         return value;
+//       })
+//        let track=new THREE.KeyframeTrack(temp["name"],times,values,THREE.InterpolateLinear)
+//         trackarr.push(track)
+//      }
+//      let  clip=new THREE.AnimationClip(clipjson["name"],clipjson["duration"],trackarr)
+//      newanim.push(clip)
+//     }
+    
+//     console.log(newanim)
+    
+//     ////
+    
+//     let pose = this.tempBlendAnimation([newanim[8],newanim[0],newanim[11],newanim[4]],"pose")[4];
+
+//     let bow=this.tempBlendAnimation([newanim[3],newanim[9]],"bow")[2];
+   
+//     let shrug=this.tempBlendAnimation([newanim[6],newanim[11],newanim[4]],"shrug")[3];
+  
+//     let wave=this.tempBlendAnimation([newanim[6]],"wave")[1];
+//     console.log(pose)
+  
+
+//      tempanimations=[pose,bow,shrug,wave]
+//      sendanim=[]
+// for(let i=0;i<tempanimations.length;i++)
+// { let animationClip={}
+//   animationClip["name"]=tempanimations[i]["name"]
+//   animationClip["duration"]=tempanimations[i]["duration"]
+//   animationClip["tracks"]=[]
+//   animationClip["bio"]="Person"
+//   animationClip["type"]="simple"
+//   for(let j=0;j<tempanimations[i]["tracks"].length;j++)
+//   {
+//     let track={}
+//     track["interpolant"]="linear"
+//     track["name"]=tempanimations[i]["tracks"][j]["name"]
+//     track["times"]=JSON.stringify(tempanimations[i]["tracks"][j]["times"],function( key, value ){
+//       // the replacer function is looking for some typed arrays.
+//       // If found, it replaces it by a trio
+//       if ( 
+//            value instanceof Float32Array         )
+//       {
+//         var replacement = {
+//           constructor: value.constructor.name,
+//           data: Array.apply([], value),
+//           flag: "FLAG_TYPED_ARRAY"
+//         }
+//         return replacement;
+//       }
+//       return value;
+//     })
+  
+//     track["values"]=JSON.stringify(tempanimations[i]["tracks"][j]["values"],function( key, value ){
+//       // the replacer function is looking for some typed arrays.
+//       // If found, it replaces it by a trio
+//       if ( 
+//            value instanceof Float32Array           )
+//       {
+//         var replacement = {
+//           constructor: value.constructor.name,
+//           data: Array.apply([], value),
+//           flag: "FLAG_TYPED_ARRAY"
+//         }
+//         return replacement;
+//       }
+//       return value;
+//     })
+  
+//     animationClip["tracks"].push(track)
+//   }
+//   sendanim.push(animationClip)
+// }
+
+// for(let i=0;i<sendanim.length;i++)
+// { let options={}
+//   fetch('http://localhost:5000/dump', {
+//     method: 'POST', // or 'PUT'
+//     headers: {
+//       'Content-Type': 'application/json',
+//       "Content-Length":JSON.stringify(sendanim[i]).length.toString()
+//     },
+//     body: JSON.stringify(sendanim[i]),
+//   })
+//   .then(response => response.json())
+//   .then(result=>console.log(result))
+// }
+//     })
+
+
 
 
 
@@ -140,7 +283,11 @@ loader.load(filePath,this.gltfLoader );
   }
   render() {
     return (
+      <div className="App">
+         <Story onParsedChange={this.onParsedChange}></Story>
       <div ref={ref => (this.mount = ref) } className="canvas"/>
+     
+      </div>
     )
   }
 }
