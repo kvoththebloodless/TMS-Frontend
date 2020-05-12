@@ -7,6 +7,9 @@ This starts the node server and the website is available at localhost:3000.
 
 Enter the story line by line and watch it animate. Currently supported animations are "Shrug", "Pose", "bow" and "wave".
 
+### Backend link
+The backend repository for this project is available at the following link :https://github.com/kvoththebloodless/TMS-Backend
+
 ### Demo gif
 
 ![ezgif com-video-to-gif](https://user-images.githubusercontent.com/13608668/81335178-2edc8a00-9075-11ea-8981-e3bcea599172.gif)
