@@ -14,7 +14,7 @@ export default class App extends Component {
     return (
     
     <div className="App">
-      <Canvass></Canvass>
+      <AnimationEditModule></AnimationEditModule>
       </div>
      
     )

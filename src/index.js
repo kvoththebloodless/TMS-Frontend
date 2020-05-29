@@ -6,7 +6,7 @@ import App from './App';
 
 ReactDOM.render(
   <React.StrictMode>
-    <h1 style={{width:"100%",textAlign:"center",backgroundColor:"#fdfdfd",fontSize:"4em"}}>Tell me a Story</h1>
+    <h1 style={{width:"100%",textAlign:"center",backgroundColor:"#fdfdfd",fontSize:"4em",fontFamily:"tmsfont"}}>Tell me a Story</h1>
     <App />
   </React.StrictMode>,
   document.getElementById('root')
