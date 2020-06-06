@@ -3,6 +3,7 @@ import Canvass from "./Canvass"
 import Story from "./Story"
 import "./App.css";
 import AnimationEditModule from "./AnimationEditModule"
+import AccessoryEditor from "./AccessoryEditingModule"
 export default class App extends Component {
 
   constructor(props)
@@ -13,9 +14,9 @@ export default class App extends Component {
   render() {
     return (
     
-    <div className="App">
-      <AnimationEditModule></AnimationEditModule>
-      </div>
+   
+      <AccessoryEditor></AccessoryEditor>
+     
      
     )
   }
