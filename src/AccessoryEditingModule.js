@@ -23,13 +23,28 @@ export default class AccessoryEditor extends Component {
     this.stickymesh=null
     this.state={animchardata:undefined
     ,clip:[]}
+    this.dragmeshes=[]
+    this.raycaster=null;
+    this.mouse=null;
   }
   
   animate() {
     
     requestAnimationFrame(this.animate);
   
-    
+    this.raycaster.setFromCamera( this.mouse, this.camera );
+    let temp=[]
+    if (this.stickymesh)
+      temp.push(this.stickymesh)
+    if(this.mesh)
+      temp.push(this.mesh)  
+    let intersects = this.raycaster.intersectObjects( temp);
+    for ( var i = 0; i < intersects.length; i++ ) {
+
+      intersects[ i ].object.material.color.set( 0xf );
+  
+    }
+    console.log(intersects)
     this.renderer.render(this.scene, this.camera);
   }
    
@@ -64,19 +79,34 @@ color: 0x000000, // red
 flatShading: true,
  } );
  child.material.skinning = true;
+
 }})
 
 this.scene.add( gltf.scene );
+console.log(this.scene.children)
 // let tempanimations=gltf.animations
 this.stickymesh=gltf.scene.getObjectByName("Sticky")
-
+// this.dragmeshes.push(this.stickymesh)
+const dragControls=new DragControls(this.dragmeshes, this.camera,this.renderer.domElement);
+// dragControls.addEventListener('hoveron',function(event){
+//   console.log(event)
+// })
 this.stickymesh.scale=200
 
+  }
+  onMouseMove=( event )=> {
+
+    // calculate mouse position in normalized device coordinates
+    // (-1 to +1) for both components
+  
+    this.mouse.x = ( event.offsetX / this.mount.clientWidth ) * 2 - 1;
+    this.mouse.y = - ( event.offsetY /  this.mount.clientHeight  ) * 2 + 1;
+  
   }
   componentDidMount() {
     this.camera=new THREE.PerspectiveCamera( 50, this.mount.clientWidth/this.mount.clientHeight, 1, 1000 );
     this.camera.position.z = 10;
-    this.scene.background = new THREE.Color("#ffffff");
+    this.scene.background = new THREE.Color("#D00000");
     this.renderer.setSize( this.mount.clientWidth, this.mount.clientHeight );
     const light = new THREE.HemisphereLight(0xbbbbff, 0x444422);
     light.position.set(0, 1, 0);
@@ -84,34 +114,29 @@ this.stickymesh.scale=200
     this.mount.appendChild( this.renderer.domElement );
     this.material = new THREE.MeshBasicMaterial( {  
      transparent:true,
-      side: THREE.DoubleSide
+ 
      });
-    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry( 2, 2), this.material );
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry( 2, 1), this.material );
     this.mesh.position.z=2
     this.scene.add(this.mesh)
-    const dragControls = new DragControls([this.mesh], this.camera,this.renderer.domElement);
-    // dragControls.addEventListener( 'dragstart', function ( event ) {
+    this.dragmeshes.push(this.mesh)
+   
+   this.raycaster = new THREE.Raycaster();
+    this.mouse = new THREE.Vector2()
 
-    //  console.log("hehe")
     
-    // } );
-    
-    // dragControls.addEventListener( 'dragend', function ( event ) {
-    
-    //  console.log("heheh")
-    
-    // } );
     this.renderer.gammaOutput = true;
     this.renderer.gammaFactor = 2.2;
     console.log(this.scene)
     this.setupDrawingCanvas()
     const loader = new GLTFLoader();
+    window.addEventListener( 'mousemove', this.onMouseMove, false );
     loader.load(filePath,this.gltfLoader );
     this.animate(this.mixer);
    
   }
    draw =(drawingContext,  x, y )=> {
-    console.log("came",x,y)
+    
     this.drawingContext.moveTo( this.drawStartPos.x, this.drawStartPos.y );
     this.drawingContext.lineWidth = 10;
     this.drawingContext.strokeStyle = '#FFFF00';
@@ -127,7 +152,7 @@ this.stickymesh.scale=200
   mouseDownEvent =(e)=>{
     
     this.paint=true
-    console.log(e.offsetX,"huh")
+ 
     var xoffset = this.drawingContext.offsetX
     var yoffset=this.drawingContext.offsetY
     this.drawStartPos.set(e.nativeEvent.offsetX,e.nativeEvent.offsetY)
