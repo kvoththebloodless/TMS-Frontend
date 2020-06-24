@@ -134,8 +134,11 @@ flatShading: true,
 }})
 
 this.scene.add( gltf.scene );
+console.log(this.scene)
 let tempanimations=gltf.animations
-this.mesh=gltf.scene.getObjectByName("Sticky")
+this.mesh=gltf.scene.getObjectByName("HeadBox") //any mesh would do because all have vertex groups defined and everything
+//is connected to a single armature. 
+console.log(gltf)
 this.mixer = new THREE.AnimationMixer(this.mesh);
   }
 
