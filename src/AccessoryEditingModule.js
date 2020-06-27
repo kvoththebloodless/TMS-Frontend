@@ -5,6 +5,8 @@ import "./App.css";
 import filePath from "../src/testfinal.glb"
 import _ from "lodash"
 import DragControls from 'three-dragcontrols';
+import { SkinnedMesh, BoxHelper, Box3Helper } from "three";
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 var context = typeof window === "undefined" ? global : window;
 export default class AccessoryEditor extends Component {
   constructor(props){
@@ -26,25 +28,21 @@ export default class AccessoryEditor extends Component {
     this.dragmeshes=[]
     this.raycaster=null;
     this.mouse=null;
+    this.boxes=[];
+    this.children=null;
   }
   
   animate() {
     
     requestAnimationFrame(this.animate);
-  
-    this.raycaster.setFromCamera( this.mouse, this.camera );
-    let temp=[]
-    if (this.stickymesh)
-      temp.push(this.stickymesh)
-    if(this.mesh)
-      temp.push(this.mesh)  
-    let intersects = this.raycaster.intersectObjects( temp);
-    for ( var i = 0; i < intersects.length; i++ ) {
+    console.log(this.boxes)
 
-      intersects[ i ].object.material.color.set( 0xf );
-  
-    }
-    console.log(intersects)
+    this.raycaster.setFromCamera( this.mouse, this.camera );
+ 
+    let intersects = this.raycaster.intersectObjects( [this.scene],true);
+    // console.log(this.mouse)
+    if(intersects.length>1)
+      console.log(intersects)
     this.renderer.render(this.scene, this.camera);
   }
    
@@ -82,30 +80,61 @@ flatShading: true,
 
 }})
 
-this.scene.add( gltf.scene );
+
 console.log(this.scene.children)
 // let tempanimations=gltf.animations
-this.stickymesh=gltf.scene.getObjectByName("Sticky")
+this.stickymesh=gltf.scene.getObjectByName("Armature001")
+
+
 // this.dragmeshes.push(this.stickymesh)
 const dragControls=new DragControls(this.dragmeshes, this.camera,this.renderer.domElement);
 // dragControls.addEventListener('hoveron',function(event){
 //   console.log(event)
 // })
-this.stickymesh.scale=200
+// this.stickymesh.scale=200
+
+this.children=this.stickymesh.children
+for(let k=0;k<this.children.length;k++)
+{if(this.children[k] instanceof SkinnedMesh)
+ {
+
+  const pos = this.children[k].geometry.boundingBox.getCenter(new THREE.Vector3());
+
+  const dimen=this.children[k].geometry.boundingBox.max-this.children[k].geometry.boundingBox.min
+  console.log("dimen",""+dimen)
+  const material = new THREE.MeshBasicMaterial( {  
+    color: 0xf,wireframe   : true ,
+    opacity:0.2
+
+    });
+  const b= new THREE.Mesh(new THREE.PlaneGeometry(dimen.x,dimen.y),material );
+ 
+  b.position.copy(pos);
+  this.scene.add(b);
+  this.boxes.push(b)
+ }
+}
+console.log("scene",this.scene)
+this.scene.add( gltf.scene );
+this.animate(this.mixer);
 
   }
   onMouseMove=( event )=> {
 
     // calculate mouse position in normalized device coordinates
     // (-1 to +1) for both components
+ 
+
   
+    
     this.mouse.x = ( event.offsetX / this.mount.clientWidth ) * 2 - 1;
-    this.mouse.y = - ( event.offsetY /  this.mount.clientHeight  ) * 2 + 1;
+    this.mouse.y = - ( event.offsetY / this.mount.clientHeight) * 2 + 1;
   
   }
   componentDidMount() {
     this.camera=new THREE.PerspectiveCamera( 50, this.mount.clientWidth/this.mount.clientHeight, 1, 1000 );
     this.camera.position.z = 10;
+    // var controls = new OrbitControls( this.camera, this.mount );
     this.scene.background = new THREE.Color("#D00000");
     this.renderer.setSize( this.mount.clientWidth, this.mount.clientHeight );
     const light = new THREE.HemisphereLight(0xbbbbff, 0x444422);
@@ -117,7 +146,7 @@ this.stickymesh.scale=200
  
      });
     this.mesh = new THREE.Mesh(new THREE.PlaneGeometry( 2, 1), this.material );
-    this.mesh.position.z=2
+
     this.scene.add(this.mesh)
     this.dragmeshes.push(this.mesh)
    
@@ -127,12 +156,12 @@ this.stickymesh.scale=200
     
     this.renderer.gammaOutput = true;
     this.renderer.gammaFactor = 2.2;
-    console.log(this.scene)
+  
     this.setupDrawingCanvas()
     const loader = new GLTFLoader();
     window.addEventListener( 'mousemove', this.onMouseMove, false );
     loader.load(filePath,this.gltfLoader );
-    this.animate(this.mixer);
+    
    
   }
    draw =(drawingContext,  x, y )=> {
