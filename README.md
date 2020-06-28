@@ -20,6 +20,6 @@ The backend repository for this project is available at the following link :http
 
 ### Demo for Sketching props Module
 
-![ezgif com-video-to-gif (3)](https://user-images.githubusercontent.com/13608668/83936337-af83c880-a790-11ea-9e84-85582c1f19b7.gif)
+![ezgif com-crop (4)](https://user-images.githubusercontent.com/13608668/85960287-6a5a4d00-b970-11ea-84c4-3bf55b290472.gif)
 
 
