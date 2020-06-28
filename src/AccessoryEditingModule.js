@@ -5,7 +5,7 @@ import "./App.css";
 import filePath from "../src/testfinal.glb"
 import _ from "lodash"
 import DragControls from 'three-dragcontrols';
-import { SkinnedMesh, BoxHelper, Box3Helper } from "three";
+import { SkinnedMesh, BoxHelper, Box3Helper, Vector3 } from "three";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 var context = typeof window === "undefined" ? global : window;
 export default class AccessoryEditor extends Component {
@@ -30,19 +30,42 @@ export default class AccessoryEditor extends Component {
     this.mouse=null;
     this.boxes=[];
     this.children=null;
+    this.boolbeingdragged=false;
+    this.parenthighlight=null;
+    
   }
   
   animate() {
     
     requestAnimationFrame(this.animate);
-    console.log(this.boxes)
+    // console.log(this.boxes)
+
 
     this.raycaster.setFromCamera( this.mouse, this.camera );
  
-    let intersects = this.raycaster.intersectObjects( [this.scene],true);
-    // console.log(this.mouse)
-    if(intersects.length>1)
-      console.log(intersects)
+    let intersects = this.raycaster.intersectObjects(this.boxes);
+    
+    if(intersects.length>0 && this.boolbeingdragged)
+      { 
+        intersects[0].object.material.color.set(0x00ff00);
+        // console.log(intersects[0])
+        // console.log(this.mesh)
+        
+        this.parenthighlight=intersects[0].object
+      }
+      else{
+        this.parenthighlight=this.scene
+        this.boxes.forEach(element => {
+          element.material.color.set(0xff0000)
+        });
+      }
+  
+    if (this.mixer) {
+      var mixerUpdateDelta = this.clock.getDelta();
+      // Update all the animation frames
+      this.mixer.update(mixerUpdateDelta);
+      
+    }
     this.renderer.render(this.scene, this.camera);
   }
    
@@ -72,22 +95,71 @@ export default class AccessoryEditor extends Component {
     
  gltf.scene.traverse(child => {
   if (child.material) {
+
+    if(child.name==="HeadBox")
+    {  
+      const textureLoader = new THREE.TextureLoader();
+
+  // Load a texture. See the note in chapter 4 on working locally, or the page
+  // https://threejs.org/docs/#manual/introduction/How-to-run-things-locally
+  // if you run into problems here
+  const texture = textureLoader.load( 'https://cors-anywhere.herokuapp.com/https://thumbs.dreamstime.com/z/cartoon-face-retro-texture-isolated-white-38009723.jpg');
+  texture.flipY = false;
+  // set the "color space" of the texture
+  texture.encoding = THREE.sRGBEncoding;
+
+  // reduce blurring at glancing angles
+  texture.anisotropy = 16;
+
+  // create a Standard material using the texture we just loaded as a color map
+  child.material = new THREE.MeshStandardMaterial( {
+map:texture
+  } );
+  // material.color.convertSRGBToLinear();
+// child.material.map=texture;
+// child.material.needsUpdate = true 
+ console.log("childdddd",child)
+}
+else{
   child.material=new THREE.MeshStandardMaterial( {
-color: 0x000000, // red
+color: 0x00000,
 flatShading: true,
  } );
+}
  child.material.skinning = true;
 
 }})
 
+let tempanimations=gltf.animations
 
-console.log(this.scene.children)
+// console.log("gltf",gltf)
 // let tempanimations=gltf.animations
 this.stickymesh=gltf.scene.getObjectByName("Armature001")
 
 
 // this.dragmeshes.push(this.stickymesh)
 const dragControls=new DragControls(this.dragmeshes, this.camera,this.renderer.domElement);
+
+context=this
+//drag starts, boolean beingfragged is set to true. the sketched mesh is to be removed from it's current parent
+//hierarchy hence detach.
+dragControls.addEventListener( 'drag', function ( event ) {
+
+// context.mesh.parent.remove(context.mesh)
+// context.scene.attach(context.mesh)
+console.log("mesh",context.mesh)
+context.boolbeingdragged=true;
+
+} );
+
+//drag ends, boolenbeing dragged is set to false. the sketched mesh is to be added to the this.highlighted parent
+
+dragControls.addEventListener( 'dragend', function ( event ) {
+  console.log("parenthighlgight",context.parenthighlight)
+  context.parenthighlight.attach(context.mesh)
+	context.boolbeingdragged=false;
+
+} );
 // dragControls.addEventListener('hoveron',function(event){
 //   console.log(event)
 // })
@@ -97,27 +169,51 @@ this.children=this.stickymesh.children
 for(let k=0;k<this.children.length;k++)
 {if(this.children[k] instanceof SkinnedMesh)
  {
-
-  const pos = this.children[k].geometry.boundingBox.getCenter(new THREE.Vector3());
-
-  const dimen=this.children[k].geometry.boundingBox.max-this.children[k].geometry.boundingBox.min
-  console.log("dimen",""+dimen)
-  const material = new THREE.MeshBasicMaterial( {  
-    color: 0xf,wireframe   : true ,
-    opacity:0.2
-
-    });
-  const b= new THREE.Mesh(new THREE.PlaneGeometry(dimen.x,dimen.y),material );
  
-  b.position.copy(pos);
-  this.scene.add(b);
-  this.boxes.push(b)
+ let dimen=new THREE.Vector3().subVectors(this.children[k].geometry.boundingBox.max,this.children[k].geometry.boundingBox.min);
+
+  let pos = this.children[k].geometry.boundingBox.getCenter(new THREE.Vector3());
+        let b = new THREE.Mesh(
+          new THREE.PlaneGeometry(dimen.x,dimen.y),
+          new THREE.MeshBasicMaterial({
+            color: 0xff0000,
+            opacity:0.2,
+            transparent:true,
+          })
+        );
+        b.name=this.children[k].name+"Prop"
+        b.position.copy(pos);
+        let bonetoattachto= this.stickymesh.getObjectByName(this.children[k].name.split("Box")[0]+"Bone")
+        bonetoattachto.attach(b)
+        // gltf.scene.children[0].children[k].children[0].updateMatrixWorld()
+        this.boxes.push(b);
  }
 }
-console.log("scene",this.scene)
-this.scene.add( gltf.scene );
-this.animate(this.mixer);
 
+this.scene.add( gltf.scene );
+
+this.mixer = new THREE.AnimationMixer(gltf.scene.children[0].children[0]);
+console.log(this.scene)
+this.startAnimation(gltf.scene.children[0].children[0],tempanimations,"LowerLeftArmBone_raise")
+this.animate();
+
+  }
+  startAnimation=(skinnedMesh, animations, animationName)=> {
+   
+ 
+    var clip = THREE.AnimationClip.findByName(animations, animationName);
+    
+    if (clip) {
+      var action = this.mixer.clipAction(clip);
+      action.setLoop( THREE.LoopPingPong)
+      action.repetitions=50
+       action.clampWhenFinished = false
+  action.enable = true
+      action.play();
+    }
+   
+    
+   
   }
   onMouseMove=( event )=> {
 
@@ -137,6 +233,7 @@ this.animate(this.mixer);
     // var controls = new OrbitControls( this.camera, this.mount );
     this.scene.background = new THREE.Color("#D00000");
     this.renderer.setSize( this.mount.clientWidth, this.mount.clientHeight );
+    this.renderer.outputEncoding = THREE.sRGBEncoding;
     const light = new THREE.HemisphereLight(0xbbbbff, 0x444422);
     light.position.set(0, 1, 0);
     this.scene.add(light);
@@ -146,8 +243,9 @@ this.animate(this.mixer);
  
      });
     this.mesh = new THREE.Mesh(new THREE.PlaneGeometry( 2, 1), this.material );
-
+     this.mesh.position.z=2
     this.scene.add(this.mesh)
+    // console.log("OG MESH",this.mesh)
     this.dragmeshes.push(this.mesh)
    
    this.raycaster = new THREE.Raycaster();
